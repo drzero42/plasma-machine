@@ -9,14 +9,21 @@ image-version: stable
 
 # Modules run in order.
 modules:
-  # 1. Copy everything under files/system/* into the image root (/).
+  # 1. The theme uses the Plymouth "script" renderer, whose plugin
+  #    (/usr/lib64/plymouth/script.so) is not in the Bazzite base image. Layer it.
+  - type: dnf
+    install:
+      packages:
+        - plymouth-plugin-script
+
+  # 2. Copy everything under files/system/* into the image root (/).
   #    This places the theme at /usr/share/plymouth/themes/plasma-machine/.
   - type: files
     files:
       - source: system
         destination: /
 
-  # 2. Make it the default Plymouth theme.
+  # 3. Make it the default Plymouth theme.
   - type: script
     snippets:
       - "plymouth-set-default-theme plasma-machine"
