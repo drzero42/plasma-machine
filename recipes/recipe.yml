@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+# Image is published to ghcr.io/<owner>/plasma-machine
+name: plasma-machine
+description: Custom Bazzite Deck (KDE) image for the Plasma Machine, with the Plasma Machine boot splash.
+
+# Base image (FROM) and channel tag. "stable" tracks the Bazzite stable channel.
+base-image: ghcr.io/ublue-os/bazzite-deck
+image-version: stable
+
+# Modules run in order.
+modules:
+  # 1. Copy everything under files/system/* into the image root (/).
+  #    This places the theme at /usr/share/plymouth/themes/plasma-machine/.
+  - type: files
+    files:
+      - source: system
+        destination: /
+
+  # 2. Make it the default Plymouth theme.
+  - type: script
+    snippets:
+      - "plymouth-set-default-theme plasma-machine"
+
+  # 3. Regenerate the initramfs so the theme is present at early boot.
+  #    (This is the step that cannot persist when done at runtime on an atomic system.)
+  - type: initramfs
+
+  # 4. Install the cosign signing policy so signed pulls verify against cosign.pub.
+  - type: signing

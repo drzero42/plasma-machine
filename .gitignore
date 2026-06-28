@@ -1,0 +1,11 @@
+# Signing — private key must never be committed (lives in the SIGNING_SECRET repo secret)
+cosign.key
+
+# devenv / direnv
+.devenv/
+.devenv.flake.nix
+.direnv/
+devenv.local.nix
+
+# misc
+*.tar.gz

@@ -1,0 +1,80 @@
+// Plasma Machine Plymouth Theme
+//
+// Centered logo (splash2.png) on a black background, with a rotating-arc
+// spinner positioned in the open space just below the wordmark bar.
+
+Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
+Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
+
+screen_w = Window.GetWidth();
+screen_h = Window.GetHeight();
+
+// ----------------------------
+// Logo
+// ----------------------------
+
+logo.image = Image("splash2.png");
+logo.w = logo.image.GetWidth();
+logo.h = logo.image.GetHeight();
+
+// Fit to screen, but never upscale beyond native size.
+scale = screen_w / logo.w;
+scale_h = screen_h / logo.h;
+if (scale_h < scale)
+    scale = scale_h;
+if (scale > 1.0)
+    scale = 1.0;
+
+logo.disp_w = logo.w * scale;
+logo.disp_h = logo.h * scale;
+logo.x = (screen_w - logo.disp_w) / 2;
+logo.y = (screen_h - logo.disp_h) / 2;
+
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetScale(scale, scale);
+logo.sprite.SetX(logo.x);
+logo.sprite.SetY(logo.y);
+logo.sprite.SetZ(0);
+
+// ----------------------------
+// Spinner (rotating arc)
+// ----------------------------
+
+spinner.image = Image("spinner.png");
+
+// On-screen diameter, relative to the logo height.
+spinner.target = logo.disp_h * 0.11;
+spinner.scale = spinner.target / spinner.image.GetWidth();
+spinner.base = spinner.image.Scale(
+    spinner.image.GetWidth()  * spinner.scale,
+    spinner.image.GetHeight() * spinner.scale);
+
+// Center point: horizontally centered, vertically below the wordmark bar.
+spinner.cx = screen_w / 2;
+spinner.cy = logo.y + logo.disp_h * 0.86;
+
+// Pre-render rotation frames (Image.Rotate takes radians, rotates about center).
+NUM_FRAMES = 48;
+pi = 3.14159265358979;
+for (i = 0; i < NUM_FRAMES; i++)
+{
+    spinner.frames[i] = spinner.base.Rotate(i * 2 * pi / NUM_FRAMES);
+}
+
+spinner.index = 0;
+spinner.sprite = Sprite(spinner.frames[0]);
+spinner.sprite.SetZ(10);
+
+fun refresh_callback ()
+{
+    frame = spinner.frames[spinner.index];
+    spinner.sprite.SetImage(frame);
+    spinner.sprite.SetX(spinner.cx - frame.GetWidth()  / 2);
+    spinner.sprite.SetY(spinner.cy - frame.GetHeight() / 2);
+
+    spinner.index++;
+    if (spinner.index >= NUM_FRAMES)
+        spinner.index = 0;
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
