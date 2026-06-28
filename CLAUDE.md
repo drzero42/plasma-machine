@@ -46,6 +46,15 @@ Script-module theme. `plasma-machine.script`:
 cyan arc, rounded caps). Regenerate by editing and re-running the ImageMagick draw
 commands, then re-verify layout by compositing a simulated boot frame before push.
 
+**Startup vs shutdown read the theme from different places.** Startup Plymouth
+runs from the initramfs (baked by the `initramfs` module → correct theme).
+Shutdown/reboot Plymouth runs from the real root and reads
+`/etc/plymouth/plymouthd.conf`; if that file is missing it falls back to Bazzite's
+default (`bgrt`). So the image ships
+`files/system/etc/plymouth/plymouthd.conf` with `Theme=plasma-machine` to make the
+shutdown splash match. (If a machine has a tracked ostree deletion of that file
+from earlier manual tinkering, the image copy is shadowed — recreate it locally.)
+
 ## Verifying changes
 
 There is no way to see the real boot splash from CI. Before pushing, verify layout
