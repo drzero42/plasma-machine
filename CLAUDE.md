@@ -30,6 +30,9 @@ user to hand-edit `/usr` on the box as a persistent fix.
   copied verbatim to `/usr/share/plymouth/themes/plasma-machine/`.
 - `files/system/etc/plymouth/plymouthd.conf` — sets `Theme=plasma-machine` for the
   runtime (shutdown) splash; see the startup-vs-shutdown note below.
+- `files/system/usr/lib/udev/rules.d/90-steam-controller-wakeup.rules` — udev rule
+  that sets `power/wakeup=enabled` on the Steam Controller dongle/puck (USB
+  `28de:1304`) so it can wake the machine from sleep.
 - `.github/workflows/build.yml` — CI: builds on push to `main`, PRs, daily cron
   (track upstream), and manual dispatch. Publishes `ghcr.io/<owner>/plasma-machine`.
 - `cosign.pub` — public signing key (committed). Private key is the `SIGNING_SECRET`
