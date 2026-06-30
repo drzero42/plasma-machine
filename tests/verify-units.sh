@@ -8,9 +8,11 @@ repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 tmp="$(mktemp -d)"
 chmod +x "$repo"/files/system/usr/libexec/plasma-machine/* 2>/dev/null
 chmod +x "$repo"/files/system/usr/lib/systemd/system-sleep/* 2>/dev/null
+true_bin="$(which true 2>/dev/null || echo /bin/true)"
 for u in "$repo"/files/system/usr/lib/systemd/system/*.service; do
     [ -e "$u" ] || continue
     sed -e "s#/usr/libexec/plasma-machine#$repo/files/system/usr/libexec/plasma-machine#g" \
+        -e "s#ExecStart=/bin/true#ExecStart=$true_bin#g" \
         "$u" > "$tmp/$(basename "$u")"
 done
 echo "verifying: $(ls "$tmp")"

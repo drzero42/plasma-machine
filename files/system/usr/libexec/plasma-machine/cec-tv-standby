@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Send the TV to standby. Invoked as the ExecStop of cec-tv-standby.service on
+# shutdown, while cec-follower is still up (so the adapter is still configured).
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+. "$DIR/cec-lib.sh"
+
+if ! dev="$(resolve_cec_device)"; then
+    log "tv-standby: no amdgpu CEC device found; nothing to do"
+    exit 0
+fi
+log "tv-standby: sending standby via $dev"
+"$CEC_CTL" -d "$dev" --to 0 --standby || log "tv-standby: standby failed"
