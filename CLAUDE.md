@@ -30,8 +30,9 @@ user to hand-edit `/usr` on the box as a persistent fix.
   3. `script` — `plymouth-set-default-theme plasma-machine`.
   4. `initramfs` — regenerate, baking the theme into early boot.
   5. `signing` — install the cosign verification policy.
-- `recipes/modules.yml` — the shared module pipeline (bare YAML list, no
-  top-level `modules:` key), included by both recipes via `- from-file: modules.yml`.
+- `recipes/modules.yml` — the shared module pipeline. A multi-module include, so
+  it wraps its entries under a top-level `modules:` key (schema
+  `module-list-v1.json`); included by both recipes via `- from-file: modules.yml`.
 - **Channels are tags, not separate packages.** Both recipes use `name:
   plasma-machine`, so they publish to one GHCR package. Tags: `latest` + `stable`
   → stable channel; `testing` → testing channel. `alt-tags` overrides BlueBuild's

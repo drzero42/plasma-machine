@@ -1,30 +1,31 @@
-# yaml-language-server: $schema=https://schema.blue-build.org/modules-v1.json
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/module-list-v1.json
 # Shared module pipeline for all Plasma Machine channels (stable + testing).
 # Included by recipes/recipe.yml and recipes/recipe-testing.yml via `from-file`.
-# Bare list: no top-level `modules:` key. Order matters.
+# Multi-module includes wrap their entries under a top-level `modules:` key. Order matters.
+modules:
+  # 1. The theme uses the Plymouth "script" renderer, whose plugin
+  #    (/usr/lib64/plymouth/script.so) is not in the Bazzite base image. Layer it.
+  - type: dnf
+    install:
+      packages:
+        - plymouth-plugin-script
 
-# 1. The theme uses the Plymouth "script" renderer, whose plugin
-#    (/usr/lib64/plymouth/script.so) is not in the Bazzite base image. Layer it.
-- type: dnf
-  install:
-    packages:
-      - plymouth-plugin-script
+  # 2. Copy everything under files/system/* into the image root (/).
+  #    This places the theme at /usr/share/plymouth/themes/plasma-machine/.
+  - type: files
+    files:
+      - source: system
+        destination: /
 
-# 2. Copy everything under files/system/* into the image root (/).
-#    This places the theme at /usr/share/plymouth/themes/plasma-machine/.
-- type: files
-  files:
-    - source: system
-      destination: /
+  # 3. Make it the default Plymouth theme.
+  - type: script
+    snippets:
+      - "plymouth-set-default-theme plasma-machine"
 
-# 3. Make it the default Plymouth theme.
-- type: script
-  snippets:
-    - "plymouth-set-default-theme plasma-machine"
+  # 4. Regenerate the initramfs so the theme is present at early boot.
+  #    (This is the step that cannot persist when done at runtime on an atomic system.)
+  - type: initramfs
 
-# 4. Regenerate the initramfs so the theme is present at early boot.
-#    (This is the step that cannot persist when done at runtime on an atomic system.)
-- type: initramfs
-
-# 5. Install the cosign signing policy so signed pulls verify against cosign.pub.
-- type: signing
+  # 5. Install the cosign signing policy so signed pulls verify against cosign.pub.
+  - type: signing
