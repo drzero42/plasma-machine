@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Resolve the amdgpu CEC device the TV is on, then run cec-follower on it to keep
+# the PC registered on the bus and answering polls. Exits non-zero if no device
+# is found so systemd (Restart=always) keeps retrying until the TV appears.
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+. "$DIR/cec-lib.sh"
+
+CEC_FOLLOWER="${CEC_FOLLOWER:-cec-follower}"
+
+if ! dev="$(resolve_cec_device_wait)"; then
+    log "follower: no amdgpu CEC device found after wait"
+    exit 1
+fi
+log "follower: starting on $dev"
+exec "$CEC_FOLLOWER" -d "$dev"

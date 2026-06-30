@@ -27,5 +27,26 @@ modules:
   #    (This is the step that cannot persist when done at runtime on an atomic system.)
   - type: initramfs
 
-  # 5. Install the cosign signing policy so signed pulls verify against cosign.pub.
+  # 5. HDMI-CEC TV automation. The follower/tv-on/tv-standby/suspend units and
+  #    their /usr/libexec/plasma-machine scripts are copied by the files module
+  #    above. v4l-utils (cec-ctl, cec-follower) already ships in the bazzite-deck
+  #    base, so it is deliberately NOT layered here — re-layering a base package
+  #    can error under rpm-ostree. If a future base ever drops it, uncomment:
+  #  - type: dnf
+  #    install:
+  #      packages:
+  #        - v4l-utils
+  #
+  #    Enable the always-on services; cec-suspend-on-tv-off is installed but left
+  #    disabled (opt in on-device: systemctl enable --now cec-suspend-on-tv-off).
+  - type: systemd
+    system:
+      enabled:
+        - cec-follower.service
+        - cec-tv-on.service
+        - cec-tv-standby.service
+      disabled:
+        - cec-suspend-on-tv-off.service
+
+  # 6. Install the cosign signing policy so signed pulls verify against cosign.pub.
   - type: signing

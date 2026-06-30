@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Recording stub for cec-ctl used by offline tests.
+#   CEC_FIXTURE_DIR     - dir with <devbasename>.info for info queries
+#   CEC_CALLS           - file to append transmit invocations to
+#   CEC_MONITOR_FIXTURE - file streamed when --monitor/--monitor-all is passed
+dev=""
+prev=""
+mode="info"
+for a in "$@"; do
+    case "$a" in
+        -d) prev="-d" ;;
+        --to|--image-view-on|--active-source|--standby) mode="transmit"; prev="" ;;
+        --monitor|--monitor-all) mode="monitor"; prev="" ;;
+        *) [ "$prev" = "-d" ] && { dev="$a"; prev=""; } ;;
+    esac
+done
+
+case "$mode" in
+    monitor)
+        [ -n "${CEC_MONITOR_FIXTURE:-}" ] && cat "$CEC_MONITOR_FIXTURE"
+        exit 0 ;;
+    transmit)
+        [ -n "${CEC_CALLS:-}" ] && printf '%s\n' "$*" >> "$CEC_CALLS"
+        exit 0 ;;
+    info)
+        base="$(basename "${dev:-none}")"
+        if [ -n "${CEC_FIXTURE_DIR:-}" ] && [ -f "$CEC_FIXTURE_DIR/$base.info" ]; then
+            cat "$CEC_FIXTURE_DIR/$base.info"; exit 0
+        fi
+        exit 1 ;;
+esac

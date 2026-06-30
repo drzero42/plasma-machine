@@ -1,0 +1,8 @@
+Driver Info:
+        Driver Name                : amdgpu
+        Adapter Name               : DP-3
+        Capabilities               : 0x0000037e
+        Physical Address           : 4.0.0.0
+        Logical Address Mask       : 0x0800
+        CEC Version                : 2.0
+        OSD Name                   : 'Playback'

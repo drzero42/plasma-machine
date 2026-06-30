@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# systemd-sleep hook. On resume (post) re-run the tv-on logic asynchronously so
+# we never block the resume path. Args: $1=pre|post, $2=suspend|hibernate|...
+SYSTEMCTL="${SYSTEMCTL:-systemctl}"
+case "${1:-}" in
+    post) "$SYSTEMCTL" --no-block restart cec-tv-on.service ;;
+esac

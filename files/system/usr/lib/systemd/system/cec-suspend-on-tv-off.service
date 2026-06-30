@@ -1,0 +1,14 @@
+[Unit]
+Description=Suspend the PC when the TV broadcasts HDMI-CEC standby
+Documentation=https://github.com/drzero42/plasma-machine
+After=cec-follower.service
+Wants=cec-follower.service
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/plasma-machine/cec-suspend-on-tv-off
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

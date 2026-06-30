@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Suspend the PC when the TV broadcasts CEC <Standby>. Opt-in: the unit ships
+# disabled; enable with `systemctl enable --now cec-suspend-on-tv-off.service`.
+# Source with CEC_TEST_SOURCE=1 to load the functions without running main.
+set -uo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+. "$DIR/cec-lib.sh"
+
+SYSTEMCTL="${SYSTEMCTL:-systemctl}"
+CEC_SUSPEND_DEBOUNCE="${CEC_SUSPEND_DEBOUNCE:-5}"
+
+# Match a STANDBY broadcast sourced from the TV (logical address 0). The TV
+# broadcasts "TV to all (0 to 15): STANDBY (0x36)". Keyed on "TV to all" so a
+# STANDBY from another device, or our own directed standby, never matches.
+# NOTE: validate the exact `cec-ctl --monitor` wording on-device (checklist) and
+# adjust this pattern if it differs from cec-follower's.
+handle_line() {
+    case "$1" in
+        *"TV to all"*"STANDBY"*) return 0 ;;
+    esac
+    return 1
+}
+
+# Read one monitor session; suspend on the first TV standby, then return.
+monitor_once() {
+    "$CEC_CTL" -d "$1" --monitor 2>/dev/null | while IFS= read -r line; do
+        if handle_line "$line"; then
+            log "suspend-on-tv-off: TV standby detected; suspending"
+            "$SYSTEMCTL" suspend || log "suspend-on-tv-off: suspend failed"
+            return 0
+        fi
+    done
+}
+
+main() {
+    local dev
+    if ! dev="$(resolve_cec_device_wait)"; then
+        log "suspend-on-tv-off: no amdgpu CEC device found"
+        exit 1
+    fi
+    log "suspend-on-tv-off: monitoring $dev"
+    while :; do
+        monitor_once "$dev"
+        # Debounce + restart monitor so a STANDBY buffered before suspend can't
+        # immediately re-suspend on resume.
+        sleep "$CEC_SUSPEND_DEBOUNCE"
+    done
+}
+
+if [ "${CEC_TEST_SOURCE:-0}" != "1" ]; then
+    main "$@"
+fi

@@ -1,0 +1,12 @@
+[Unit]
+Description=HDMI-CEC follower (keep this PC registered on the CEC bus)
+Documentation=https://github.com/drzero42/plasma-machine
+
+[Service]
+Type=simple
+ExecStart=/usr/libexec/plasma-machine/cec-follower-start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

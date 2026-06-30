@@ -1,0 +1,12 @@
+[Unit]
+Description=Send the TV to standby over HDMI-CEC on shutdown
+After=cec-follower.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/true
+ExecStop=/usr/libexec/plasma-machine/cec-tv-standby
+
+[Install]
+WantedBy=multi-user.target
