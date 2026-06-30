@@ -27,26 +27,41 @@ modules:
   #    (This is the step that cannot persist when done at runtime on an atomic system.)
   - type: initramfs
 
-  # 5. HDMI-CEC TV automation. The follower/tv-on/tv-standby/suspend units and
-  #    their /usr/libexec/plasma-machine scripts are copied by the files module
-  #    above. v4l-utils (cec-ctl, cec-follower) already ships in the bazzite-deck
-  #    base, so it is deliberately NOT layered here — re-layering a base package
-  #    can error under rpm-ostree. If a future base ever drops it, uncomment:
+  # 5. HDMI-CEC TV automation.
+  #    Outbound PC->TV control (wake + set active source on boot, standby on
+  #    poweroff) is already provided by the bazzite-deck base via
+  #    /usr/bin/cec-control and its cec-onboot/cec-onpoweroff/cec-onsleep one-shot
+  #    units, configured by /etc/default/cec-control (CEC_MODE=dgpu on this
+  #    machine; that file is owned by the base/host and left untouched here). So we
+  #    enable the base's boot/poweroff units and add only what the base lacks: a
+  #    persistent poll responder (cec-follower) and inbound TV-off -> suspend
+  #    (cec-suspend-on-tv-off). Both custom units + their
+  #    /usr/libexec/plasma-machine scripts are copied by the files module above.
+  #    v4l-utils (cec-ctl, cec-follower) already ships in the base, so it is
+  #    deliberately NOT layered here — re-layering a base package can error under
+  #    rpm-ostree. If a future base ever drops it, uncomment:
   #  - type: dnf
   #    install:
   #      packages:
   #        - v4l-utils
-  #
-  #    Enable the always-on services; cec-suspend-on-tv-off is installed but left
-  #    disabled (opt in on-device: systemctl enable --now cec-suspend-on-tv-off).
   - type: systemd
     system:
       enabled:
+        # base units (outbound CEC via cec-control), disabled upstream by default:
+        - cec-onboot.service
+        - cec-onpoweroff.service
+        # ours (no base equivalent):
         - cec-follower.service
-        - cec-tv-on.service
-        - cec-tv-standby.service
-      disabled:
         - cec-suspend-on-tv-off.service
+      disabled:
+        # base sleep unit: /etc/default/cec-control sets CEC_ONSLEEP_STANDBY=false.
+        - cec-onsleep.service
+      masked:
+        # libcec example units: they hardcode cec-client (wrong backend for our
+        # kernel-CEC adapter) and would race cec-control if ever enabled.
+        - cec-poweroff-tv.service
+        - cec-active-source.service
+        - cec-active-source.timer
 
   # 6. Install the cosign signing policy so signed pulls verify against cosign.pub.
   - type: signing

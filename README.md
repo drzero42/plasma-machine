@@ -62,29 +62,41 @@ sudo plymouthd; sudo plymouth --show-splash; sleep 8; sudo plymouth --quit
 
 ## HDMI-CEC TV automation
 
-Root systemd services let the booted PC drive the living-room TV over HDMI-CEC
-(amdgpu CEC-tunneling-over-AUX through a DP→HDMI adapter):
+The Bazzite base image already provides **outbound** PC→TV CEC through
+`/usr/bin/cec-control` (kernel-CEC/`cec-ctl`, runtime physical-address detection),
+driven by its `cec-onboot`/`cec-onpoweroff`/`cec-onsleep` one-shot units and
+configured by `/etc/default/cec-control` (`CEC_MODE=dgpu` on this machine). This
+image enables the base's boot/poweroff units and adds only the two things the base
+doesn't cover — so there is no duplicate "wake/standby the TV" code here.
 
-- **`cec-follower.service`** — the backbone. Runs `cec-follower` so the PC stays
-  registered on the CEC bus and answers TV polls (no `FEATURE_ABORT`). The only
-  process that owns the adapter's logical-address config.
-- **`cec-tv-on.service`** — oneshot at `multi-user.target` (and re-run on resume
-  via `/usr/lib/systemd/system-sleep/50-cec-tv-on`): wakes the TV
-  (`--image-view-on`) and switches it to this PC (`--active-source`).
-- **`cec-tv-standby.service`** — sends the TV to standby on shutdown (its
-  `ExecStop`, ordered before the follower stops so the adapter is still up).
-- **`cec-suspend-on-tv-off.service`** — *optional, ships disabled*: monitors the
-  bus and suspends the PC when the TV broadcasts `<Standby>`. Enable with
-  `sudo systemctl enable --now cec-suspend-on-tv-off.service`.
+- **`cec-onboot.service`** *(base)* — on boot, wakes the TV and sets the PC as the
+  active source. **Enabled by this image.**
+- **`cec-onpoweroff.service`** *(base)* — on shutdown, sends the TV to standby.
+  **Enabled by this image.**
+- **`cec-onsleep.service`** *(base)* — sleep/resume CEC. **Left disabled** —
+  `/etc/default/cec-control` sets `CEC_ONSLEEP_STANDBY=false`.
+- **`cec-follower.service`** *(this repo)* — runs `cec-follower` so the PC stays
+  registered on the CEC bus and answers TV polls (no `FEATURE_ABORT`). The base
+  uses one-shots only, so this persistent responder has no base equivalent.
+  **Enabled.**
+- **`cec-suspend-on-tv-off.service`** *(this repo)* — the **inbound** direction:
+  monitors the bus and suspends the PC when the TV broadcasts `<Standby>`. No base
+  equivalent. **Enabled** (opt out: `systemctl disable --now cec-suspend-on-tv-off`).
 
-### Runtime resolution (no hardcoded hardware)
+The libcec example units `cec-poweroff-tv.service`, `cec-active-source.service`,
+and `cec-active-source.timer` are **masked** — they hardcode `cec-client` (the
+wrong backend for this kernel-CEC adapter) and would race `cec-control`.
 
-`cec-ctl`/`cec-follower` are already in the Bazzite base, so nothing is layered.
-The wrapper scripts in `/usr/libexec/plasma-machine/` (sharing `cec-lib.sh`)
-resolve everything at runtime: they pick the `amdgpu` CEC device that currently
-reports a valid physical address (the TV's powered port), and read that physical
-address back for `--active-source`. Move the cable to a different GPU port and it
-re-resolves on the next boot — no edits, nothing to change in the image.
+`/etc/default/cec-control` is owned by the base/host and is **not** shipped or
+modified by this image.
+
+### Runtime resolution (the kept scripts)
+
+`cec-ctl`/`cec-follower` already ship in the Bazzite base, so nothing is layered.
+`cec-follower-start` and `cec-suspend-on-tv-off` share `cec-lib.sh`, which at
+runtime picks the `amdgpu` CEC device reporting a valid physical address (the TV's
+powered port) — no hardcoded device or address, and a cable moved to a different
+GPU port re-resolves on the next boot.
 
 ### On-device validation checklist (after `rpm-ostree rebase` + reboot)
 
@@ -95,18 +107,16 @@ re-resolves on the next boot — no edits, nothing to change in the image.
    sticks at `0x0000`, `systemctl restart cec-follower`.
 3. **No FEATURE_ABORT:** run `cec-follower -m` (or watch the running service) and
    confirm TV polls get replies, not `FEATURE_ABORT`.
-4. **Startup:** reboot → the TV wakes and switches to the PC input.
-5. **Shutdown:** reboot/poweroff → the TV goes to standby.
-6. **Resume:** suspend then wake → the TV wakes and switches input again.
-7. **Monitor format (for the optional unit):** run
+4. **Suspend-on-TV-off:** turn the TV off → the PC suspends; on resume there
+   should be **no** suspend loop.
+5. **Monitor format:** if standby detection stops working, run
    `cec-ctl -d /dev/cec0 --monitor`, turn the TV off, and confirm the received
    line matches the script's `*"TV to all"*"STANDBY"*` pattern. If `--monitor`
    formats it differently than `cec-follower`, adjust `handle_line` in
    `cec-suspend-on-tv-off`.
-8. **Suspend-on-TV-off:** first confirm nothing already suspends the PC on
-   TV-off (it doesn't by default). To enable it:
-   `systemctl enable --now cec-suspend-on-tv-off.service`, turn the TV off → PC
-   suspends; then verify there is **no** suspend loop on resume.
+6. **Outbound (base cec-control):** reboot → TV wakes + switches input
+   (`cec-onboot`); poweroff → TV standby (`cec-onpoweroff`). These are the base's
+   units; check `/etc/default/cec-control` if they misbehave.
 
 ### Developing the CEC scripts
 
