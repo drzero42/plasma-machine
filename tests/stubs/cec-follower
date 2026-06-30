@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# Recording stub for cec-follower. FOLLOWER_CALLS=file captures invocation args.
+[ -n "${FOLLOWER_CALLS:-}" ] && printf '%s\n' "$*" >> "$FOLLOWER_CALLS"
+exit 0
