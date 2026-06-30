@@ -1,0 +1,1 @@
+SUBSYSTEM=="cec", GROUP="video", MODE="0660", TAG+="uaccess"

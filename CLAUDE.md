@@ -46,6 +46,9 @@ user to hand-edit `/usr` on the box as a persistent fix.
 - `files/system/usr/lib/udev/rules.d/90-steam-controller-wakeup.rules` — udev rule
   that sets `power/wakeup=enabled` on the Steam Controller dongle/puck (USB
   `28de:1304`) so it can wake the machine from sleep.
+- `files/system/usr/lib/udev/rules.d/90-cec-uaccess.rules` — udev rule that grants
+  the locally logged-in user access to `cec` devices (`GROUP=video`, `MODE=0660`,
+  `TAG+="uaccess"`) for the CEC adapter.
 - `.github/workflows/build.yml` — CI: builds on push to `main`, PRs, daily cron
   (track upstream), and manual dispatch. A matrix builds **both** channel recipes,
   publishing `ghcr.io/<owner>/plasma-machine` with the `latest`/`stable`/`testing`
