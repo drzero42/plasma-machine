@@ -1,5 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-# Image is published to ghcr.io/<owner>/plasma-machine
+# Stable channel. Published to ghcr.io/<owner>/plasma-machine with tags
+# `latest` and `stable` (plus version/timestamp/sha variants).
 name: plasma-machine
 description: Custom Bazzite Deck (KDE) image for the Plasma Machine, with the Plasma Machine boot splash.
 
@@ -7,30 +8,12 @@ description: Custom Bazzite Deck (KDE) image for the Plasma Machine, with the Pl
 base-image: ghcr.io/ublue-os/bazzite-deck
 image-version: stable
 
-# Modules run in order.
+# Channel tags. alt-tags OVERRIDES BlueBuild's default latest+timestamp tagging,
+# so `latest` is listed explicitly to keep the existing deploy ref working.
+alt-tags:
+  - latest
+  - stable
+
+# Module pipeline is shared with the testing channel; see recipes/modules.yml.
 modules:
-  # 1. The theme uses the Plymouth "script" renderer, whose plugin
-  #    (/usr/lib64/plymouth/script.so) is not in the Bazzite base image. Layer it.
-  - type: dnf
-    install:
-      packages:
-        - plymouth-plugin-script
-
-  # 2. Copy everything under files/system/* into the image root (/).
-  #    This places the theme at /usr/share/plymouth/themes/plasma-machine/.
-  - type: files
-    files:
-      - source: system
-        destination: /
-
-  # 3. Make it the default Plymouth theme.
-  - type: script
-    snippets:
-      - "plymouth-set-default-theme plasma-machine"
-
-  # 3. Regenerate the initramfs so the theme is present at early boot.
-  #    (This is the step that cannot persist when done at runtime on an atomic system.)
-  - type: initramfs
-
-  # 4. Install the cosign signing policy so signed pulls verify against cosign.pub.
-  - type: signing
+  - from-file: modules.yml
