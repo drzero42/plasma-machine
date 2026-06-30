@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+# Testing channel. Published to ghcr.io/<owner>/plasma-machine with the `testing`
+# tag (plus version/timestamp/sha variants). Same package as stable — channels
+# are tags, not separate packages. `latest` stays bound to the stable channel.
+name: plasma-machine
+description: Custom Bazzite Deck (KDE) image for the Plasma Machine, tracking the Bazzite testing channel.
+
+# Base image (FROM) and channel tag. "testing" tracks the Bazzite testing channel.
+base-image: ghcr.io/ublue-os/bazzite-deck
+image-version: testing
+
+# Channel tags. alt-tags OVERRIDES BlueBuild's default latest+timestamp tagging.
+# Only `testing` here — `latest` must stay on the stable channel.
+alt-tags:
+  - testing
+
+# Module pipeline is shared with the stable channel; see recipes/modules.yml.
+modules:
+  - from-file: modules.yml
