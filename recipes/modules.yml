@@ -37,15 +37,16 @@ modules:
   #      packages:
   #        - v4l-utils
   #
-  #    Enable the always-on services; cec-suspend-on-tv-off is installed but left
-  #    disabled (opt in on-device: systemctl enable --now cec-suspend-on-tv-off).
+  #    Enable all four CEC services by default. cec-suspend-on-tv-off was
+  #    validated on-device (it detects the TV's <Standby> and suspends the PC,
+  #    and coexists with cec-follower on the same /dev/cec device), so it is
+  #    enabled out of the box rather than left opt-in.
   - type: systemd
     system:
       enabled:
         - cec-follower.service
         - cec-tv-on.service
         - cec-tv-standby.service
-      disabled:
         - cec-suspend-on-tv-off.service
 
   # 6. Install the cosign signing policy so signed pulls verify against cosign.pub.

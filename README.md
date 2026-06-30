@@ -73,9 +73,9 @@ Root systemd services let the booted PC drive the living-room TV over HDMI-CEC
   (`--image-view-on`) and switches it to this PC (`--active-source`).
 - **`cec-tv-standby.service`** — sends the TV to standby on shutdown (its
   `ExecStop`, ordered before the follower stops so the adapter is still up).
-- **`cec-suspend-on-tv-off.service`** — *optional, ships disabled*: monitors the
-  bus and suspends the PC when the TV broadcasts `<Standby>`. Enable with
-  `sudo systemctl enable --now cec-suspend-on-tv-off.service`.
+- **`cec-suspend-on-tv-off.service`** — monitors the bus and suspends the PC when
+  the TV broadcasts `<Standby>`. Enabled by default (validated on-device). Opt out
+  with `sudo systemctl disable --now cec-suspend-on-tv-off.service`.
 
 ### Runtime resolution (no hardcoded hardware)
 
@@ -98,15 +98,14 @@ re-resolves on the next boot — no edits, nothing to change in the image.
 4. **Startup:** reboot → the TV wakes and switches to the PC input.
 5. **Shutdown:** reboot/poweroff → the TV goes to standby.
 6. **Resume:** suspend then wake → the TV wakes and switches input again.
-7. **Monitor format (for the optional unit):** run
+7. **Monitor format:** if the standby detection ever stops working, run
    `cec-ctl -d /dev/cec0 --monitor`, turn the TV off, and confirm the received
    line matches the script's `*"TV to all"*"STANDBY"*` pattern. If `--monitor`
    formats it differently than `cec-follower`, adjust `handle_line` in
    `cec-suspend-on-tv-off`.
-8. **Suspend-on-TV-off:** first confirm nothing already suspends the PC on
-   TV-off (it doesn't by default). To enable it:
-   `systemctl enable --now cec-suspend-on-tv-off.service`, turn the TV off → PC
-   suspends; then verify there is **no** suspend loop on resume.
+8. **Suspend-on-TV-off:** enabled by default — turn the TV off → the PC suspends;
+   on resume there should be **no** suspend loop. Opt out with
+   `systemctl disable --now cec-suspend-on-tv-off.service`.
 
 ### Developing the CEC scripts
 
