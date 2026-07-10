@@ -28,12 +28,12 @@ modules:
   - type: initramfs
 
   # 5. HDMI-CEC TV automation.
-  #    Outbound PC->TV control (wake + set active source on boot, standby on
-  #    poweroff) is already provided by the bazzite-deck base via
+  #    Outbound PC->TV control (wake + set active source on boot) is already
+  #    provided by the bazzite-deck base via
   #    /usr/bin/cec-control and its cec-onboot/cec-onpoweroff/cec-onsleep one-shot
   #    units, configured by /etc/default/cec-control (CEC_MODE=dgpu on this
   #    machine; that file is owned by the base/host and left untouched here). So we
-  #    enable the base's boot/poweroff units and add only what the base lacks: a
+  #    enable the base's boot unit and add only what the base lacks: a
   #    persistent poll responder (cec-follower) and inbound TV-off -> suspend
   #    (cec-suspend-on-tv-off). Both custom units + their
   #    /usr/libexec/plasma-machine scripts are copied by the files module above.
@@ -47,9 +47,8 @@ modules:
   - type: systemd
     system:
       enabled:
-        # base units (outbound CEC via cec-control), disabled upstream by default:
+        # base unit (outbound CEC via cec-control), disabled upstream by default:
         - cec-onboot.service
-        - cec-onpoweroff.service
         # ours (no base equivalent):
         - cec-follower.service
         - cec-suspend-on-tv-off.service

@@ -66,13 +66,13 @@ The Bazzite base image already provides **outbound** PC→TV CEC through
 `/usr/bin/cec-control` (kernel-CEC/`cec-ctl`, runtime physical-address detection),
 driven by its `cec-onboot`/`cec-onpoweroff`/`cec-onsleep` one-shot units and
 configured by `/etc/default/cec-control` (`CEC_MODE=dgpu` on this machine). This
-image enables the base's boot/poweroff units and adds only the two things the base
-doesn't cover — so there is no duplicate "wake/standby the TV" code here.
+image enables only the base's boot unit and adds the two things the base
+doesn't cover — so there is no duplicate "wake the TV" code here.
 
 - **`cec-onboot.service`** *(base)* — on boot, wakes the TV and sets the PC as the
   active source. **Enabled by this image.**
-- **`cec-onpoweroff.service`** *(base)* — on shutdown, sends the TV to standby.
-  **Enabled by this image.**
+- **`cec-onpoweroff.service`** *(base)* — would send the TV to standby on shutdown.
+  **Left disabled** — the TV must not turn off when the PC powers off.
 - **`cec-onsleep.service`** *(base)* — sleep/resume CEC. **Left disabled** —
   `/etc/default/cec-control` sets `CEC_ONSLEEP_STANDBY=false`.
 - **`cec-follower.service`** *(this repo)* — runs `cec-follower` so the PC stays
@@ -115,8 +115,9 @@ GPU port re-resolves on the next boot.
    formats it differently than `cec-follower`, adjust `handle_line` in
    `cec-suspend-on-tv-off`.
 6. **Outbound (base cec-control):** reboot → TV wakes + switches input
-   (`cec-onboot`); poweroff → TV standby (`cec-onpoweroff`). These are the base's
-   units; check `/etc/default/cec-control` if they misbehave.
+   (`cec-onboot`). This is the base's unit; check `/etc/default/cec-control` if it
+   misbehaves. Poweroff must **not** send the TV to standby (`cec-onpoweroff` is
+   left disabled).
 
 ### Developing the CEC scripts
 
