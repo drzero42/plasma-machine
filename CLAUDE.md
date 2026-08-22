@@ -18,11 +18,8 @@ user to hand-edit `/usr` on the box as a persistent fix.
 
 ## Layout
 
-- `recipes/recipe.yml` & `recipes/recipe-testing.yml` — BlueBuild recipes for the
-  **stable** and **testing** channels. Both share `recipes/modules.yml` (a bare
-  module list) via `from-file`, so the customization pipeline can't drift between
-  channels. They differ only in `image-version` (`stable` vs `testing`) and
-  `alt-tags`. Modules in order:
+- `recipes/recipe.yml` — the BlueBuild recipe, tracking the Bazzite **stable**
+  channel (`image-version: stable`). Modules (see `recipes/modules.yml`), in order:
   1. `dnf` — layers `plymouth-plugin-script`. **Required:** the Bazzite base image
      ships Plymouth without `/usr/lib64/plymouth/script.so`, so a script-renderer
      theme can't be set without it (`plymouth-set-default-theme` errors otherwise).
@@ -30,29 +27,19 @@ user to hand-edit `/usr` on the box as a persistent fix.
   3. `script` — `plymouth-set-default-theme plasma-machine`.
   4. `initramfs` — regenerate, baking the theme into early boot.
   5. `signing` — install the cosign verification policy.
-- `recipes/modules.yml` — the shared module pipeline. A multi-module include, so
-  it wraps its entries under a top-level `modules:` key (schema
-  `module-list-v1.json`); included by both recipes via `- from-file: modules.yml`.
-- **Channels are tags, not separate packages.** Both recipes use `name:
-  plasma-machine`, so they publish to one GHCR package. Tags: `latest` + `stable`
-  → stable channel; `testing` → testing channel. `alt-tags` overrides BlueBuild's
-  default `latest`+timestamp tags, which is why the stable recipe lists `latest`
-  explicitly. `latest` always tracks stable, so the existing deploy ref keeps
-  working.
+- `recipes/modules.yml` — the module pipeline. A multi-module include, so it
+  wraps its entries under a top-level `modules:` key (schema
+  `module-list-v1.json`); included by the recipe via `- from-file: modules.yml`.
+- `alt-tags` (`latest`, `stable`) overrides BlueBuild's default
+  `latest`+timestamp tags, which is why the recipe lists `latest` explicitly —
+  the deploy ref tracks `:latest`.
 - `files/system/usr/share/plymouth/themes/plasma-machine/` — the Plymouth theme,
   copied verbatim to `/usr/share/plymouth/themes/plasma-machine/`.
 - `files/system/etc/plymouth/plymouthd.conf` — sets `Theme=plasma-machine` for the
   runtime (shutdown) splash; see the startup-vs-shutdown note below.
-- `files/system/usr/lib/udev/rules.d/90-steam-controller-wakeup.rules` — udev rule
-  that sets `power/wakeup=enabled` on the Steam Controller dongle/puck (USB
-  `28de:1304`) so it can wake the machine from sleep.
-- `files/system/usr/lib/udev/rules.d/90-cec-uaccess.rules` — udev rule that grants
-  the locally logged-in user access to `cec` devices (`GROUP=video`, `MODE=0660`,
-  `TAG+="uaccess"`) for the CEC adapter.
 - `.github/workflows/build.yml` — CI: builds on push to `main`, PRs, daily cron
-  (track upstream), and manual dispatch. A matrix builds **both** channel recipes,
-  publishing `ghcr.io/<owner>/plasma-machine` with the `latest`/`stable`/`testing`
-  tags.
+  (track upstream), and manual dispatch, publishing
+  `ghcr.io/<owner>/plasma-machine` with the `latest`/`stable` tags.
 - `cosign.pub` — public signing key (committed). Private key is the `SIGNING_SECRET`
   repo secret; `cosign.key` is gitignored and must never be committed.
 - `devenv.nix` — toolchain (`cosign`, `jq`, `gh`). `devenv shell` or direnv.
@@ -105,14 +92,6 @@ After the first unverified→signed switch, all future updates just track the si
 rollback` or the boot menu), not the tag — so the rolling `:latest` target is the
 intended pattern here, not a smell.
 
-To put a machine on the **testing** channel instead, substitute the `:testing`
-tag (same unverified→signed bootstrap as stable):
-
-```bash
-rpm-ostree rebase ostree-image-signed:docker://ghcr.io/drzero42/plasma-machine:testing
-systemctl reboot
-```
-
 If migrating a machine that was previously hand-tinkered: a locally layered
 `plymouth-plugin-script` collides with this image's base copy — drop it in the same
 transaction (`rpm-ostree rebase <ref> --uninstall plymouth-plugin-script`). And a
@@ -126,10 +105,7 @@ to `bgrt`.
   cron that re-derives from upstream `bazzite-deck:stable` (this is what pulls in
   upstream Bazzite updates), plus manual dispatch. Caveat: GitHub auto-disables
   scheduled workflows after 60 days of repo inactivity — re-enable in the Actions
-  tab if the daily build stops. Every build trigger (push, PR, daily cron, manual
-  dispatch) builds **both** the stable and testing channels via the workflow
-  matrix; `fail-fast: false` keeps a testing-channel break from blocking the
-  stable build.
+  tab if the daily build stops.
 - **Machine pulls:** via the Universal Blue updater (`uupd`) on a systemd timer
   (~daily). Inspect with `systemctl list-timers | grep -i uupd`; force now with
   `ujust update` or `rpm-ostree upgrade`.

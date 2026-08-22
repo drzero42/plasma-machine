@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
-# Stable channel. Published to ghcr.io/<owner>/plasma-machine with tags
-# `latest` and `stable` (plus version/timestamp/sha variants).
+# Published to ghcr.io/<owner>/plasma-machine with tags `latest` and `stable`
+# (plus version/timestamp/sha variants).
 name: plasma-machine
 description: Custom Bazzite Deck (KDE) image for the Plasma Machine, with the Plasma Machine boot splash.
 
@@ -8,12 +8,11 @@ description: Custom Bazzite Deck (KDE) image for the Plasma Machine, with the Pl
 base-image: ghcr.io/ublue-os/bazzite-deck
 image-version: stable
 
-# Channel tags. alt-tags OVERRIDES BlueBuild's default latest+timestamp tagging,
-# so `latest` is listed explicitly to keep the existing deploy ref working.
+# alt-tags OVERRIDES BlueBuild's default latest+timestamp tagging, so `latest`
+# is listed explicitly to keep the existing deploy ref working.
 alt-tags:
   - latest
   - stable
 
-# Module pipeline is shared with the testing channel; see recipes/modules.yml.
 modules:
   - from-file: modules.yml
