@@ -103,9 +103,11 @@ to `bgrt`.
 
 - **Image rebuilds:** on every push to `main` (non-`.md`), plus a daily `06:00 UTC`
   cron that re-derives from upstream `bazzite-deck:stable` (this is what pulls in
-  upstream Bazzite updates), plus manual dispatch. Caveat: GitHub auto-disables
-  scheduled workflows after 60 days of repo inactivity — re-enable in the Actions
-  tab if the daily build stops.
+  upstream Bazzite updates), plus manual dispatch. GitHub auto-disables
+  scheduled workflows after 60 days of repo inactivity; the `keepalive` job in
+  `build.yml` re-enables the workflow via the API on each scheduled run, which
+  resets that timer. If the daily build ever stops anyway, re-enable it in the
+  Actions tab.
 - **Machine pulls:** via the Universal Blue updater (`uupd`) on a systemd timer
   (~daily). Inspect with `systemctl list-timers | grep -i uupd`; force now with
   `ujust update` or `rpm-ostree upgrade`.
