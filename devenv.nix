@@ -5,7 +5,6 @@
   packages = with pkgs; [
     cosign # generate/manage the image signing keypair
     jq
-    gh # GitHub CLI
   ];
 
   enterShell = ''

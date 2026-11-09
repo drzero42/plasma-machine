@@ -42,7 +42,7 @@ user to hand-edit `/usr` on the box as a persistent fix.
   `ghcr.io/<owner>/plasma-machine` with the `latest`/`stable` tags.
 - `cosign.pub` — public signing key (committed). Private key is the `SIGNING_SECRET`
   repo secret; `cosign.key` is gitignored and must never be committed.
-- `devenv.nix` — toolchain (`cosign`, `jq`, `gh`). `devenv shell` or direnv.
+- `devenv.nix` — dev toolchain for working on this repo (`devenv shell`).
 - `docs/superpowers/specs/` — design specs.
 
 ## The Plymouth theme
